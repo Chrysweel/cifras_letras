@@ -34,28 +34,40 @@ const App = () => {
     }
   }, [gameState, timer]);
 
+  const getUsedIndices = useCallback((input, availableNums) => {
+    const tokens = input.match(/\d+/g) || [];
+    const usedIndices = [];
+    const tempNums = [...availableNums];
+
+    for (const token of tokens) {
+      const num = parseInt(token);
+      const index = tempNums.indexOf(num);
+      if (index !== -1) {
+        // We find the original index in the numbers array
+        // Since we are splicing tempNums, we need a way to track original indices
+        // Better way: map availableNums to objects with original index
+        const originalIndex = availableNums.findIndex((n, idx) => n === num && !usedIndices.includes(idx));
+        if (originalIndex !== -1) {
+          usedIndices.push(originalIndex);
+        } else {
+          return null; // Used a number not available or exceeded count
+        }
+      } else {
+        return null;
+      }
+    }
+    return usedIndices;
+  }, []);
+
   const handleCheck = () => {
     if (!userInput.trim()) {
       setGameState('lost');
       return;
     }
 
-    // Basic heuristic: check if numbers in input are allowed
-    const usedNumbers = userInput.match(/\d+/g) || [];
-    const availableNumbers = [...numbers];
-    let validNumbers = true;
+    const usedIndices = getUsedIndices(userInput, numbers);
 
-    for (const numStr of usedNumbers) {
-      const num = parseInt(numStr);
-      const index = availableNumbers.indexOf(num);
-      if (index === -1) {
-        validNumbers = false;
-        break;
-      }
-      availableNumbers.splice(index, 1);
-    }
-
-    if (!validNumbers) {
+    if (usedIndices === null) {
       setResult({ msg: "Has usado números no disponibles o repetidos.", error: true });
       setGameState('lost');
       return;
@@ -91,6 +103,9 @@ const App = () => {
     );
   }
 
+  // Calculate used indices for real-time feedback
+  const currentUsedIndices = getUsedIndices(userInput, numbers) || [];
+
   return (
     <div className="game-container">
       <div className="header">
@@ -106,11 +121,7 @@ const App = () => {
 
       <div className="numbers-grid">
         {numbers.map((num, i) => {
-          // Use regex to find if the number exists as a standalone token in the input
-          const escapedNum = num.toString().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const regex = new RegExp(`(?<!\\d)${escapedNum}(?!\\d)`);
-          const isUsed = regex.test(userInput);
-
+          const isUsed = currentUsedIndices.includes(i);
           return (
             <div key={i} className={`number-card ${isUsed ? 'used' : ''}`}>
               {num}
