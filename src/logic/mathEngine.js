@@ -54,13 +54,13 @@ export const evaluateExpression = (expr) => {
  * Uses a recursive approach to find the exact target or the closest result.
  */
 export const solve = (numbers, target) => {
-  let closestResult = { value: 0, expression: "" };
+  let closestResult = { value: 0, steps: [] };
 
   const find = (currentNumbers) => {
     for (let i = 0; i < currentNumbers.length; i++) {
       const n = currentNumbers[i];
       if (Math.abs(target - n.val) < Math.abs(target - closestResult.value)) {
-        closestResult = { value: n.val, expression: n.expr };
+        closestResult = { value: n.val, steps: n.steps };
       }
       if (n.val === target) return true;
     }
@@ -73,31 +73,40 @@ export const solve = (numbers, target) => {
         const a = currentNumbers[i];
         const b = currentNumbers[j];
 
-        const ops = [
-          { val: a.val + b.val, expr: `(${a.expr} + ${b.expr})` },
-          { val: a.val - b.val, expr: `(${a.expr} - ${b.expr})` },
-          { val: b.val - a.val, expr: `(${b.expr} - ${a.expr})` },
-          { val: a.val * b.val, expr: `(${a.expr} * ${b.expr})` },
-        ];
+        const generateOps = () => {
+          const possible = [
+            { val: a.val + b.val, op: '+', res: a.val + b.val },
+            { val: a.val - b.val, op: '-', res: a.val - b.val },
+            { val: b.val - a.val, op: '-', res: b.val - a.val },
+            { val: a.val * b.val, op: '*', res: a.val * b.val },
+          ];
 
-        if (b.val !== 0 && a.val % b.val === 0) {
-          ops.push({ val: a.val / b.val, expr: `(${a.expr} / ${b.expr})` });
-        }
-        if (a.val !== 0 && b.val % a.val === 0) {
-          ops.push({ val: b.val / a.val, expr: `(${b.expr} / ${a.expr})` });
-        }
-
-        for (const op of ops) {
-          if (op.val > 0) {
-            if (find([...nextBatch, op])) return true;
+          if (b.val !== 0 && a.val % b.val === 0) {
+            possible.push({ val: a.val / b.val, op: '/', res: a.val / b.val, n1: a.val, n2: b.val });
+          } else if (a.val !== 0 && b.val % a.val === 0) {
+            possible.push({ val: b.val / a.val, op: '/', res: b.val / a.val, n1: b.val, n2: a.val });
           }
+
+          return possible.filter(p => p.val > 0).map(p => {
+            const n1 = p.n1 || (p.op === '-' ? Math.max(a.val, b.val) : a.val);
+            const n2 = p.n2 || (p.op === '-' ? Math.min(a.val, b.val) : b.val);
+            const stepStr = `${n1} ${p.op} ${n2} = ${p.val}`;
+            return {
+              val: p.val,
+              steps: [...a.steps, ...b.steps, stepStr]
+            };
+          });
+        };
+
+        for (const op of generateOps()) {
+          if (find([...nextBatch, op])) return true;
         }
       }
     }
     return false;
   };
 
-  const initial = numbers.map(n => ({ val: n, expr: n.toString() }));
+  const initial = numbers.map(n => ({ val: n, steps: [] }));
   find(initial);
   return closestResult;
 };

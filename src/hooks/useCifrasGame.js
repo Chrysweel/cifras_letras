@@ -106,6 +106,7 @@ export const useCifrasGame = () => {
     };
 
     const displaySolution = () => setSolution(solve(initialNumbers, target));
+    const closeSolution = () => setSolution(null);
 
     return {
         appState, setAppState,
@@ -113,7 +114,7 @@ export const useCifrasGame = () => {
         selectedIds, selectedOp, setSelectedOp,
         history, gameState, timer, result, solution,
         startRandomGame, initializeGame, handleNumberClick,
-        confirmOperation, undo, resetToHome, displaySolution,
+        confirmOperation, undo, resetToHome, displaySolution, closeSolution,
         currentOpResult
     };
 };

@@ -3,7 +3,7 @@ import React from 'react';
 const GameView = ({
     currentNumbers, target, selectedIds, selectedOp, setSelectedOp,
     history, gameState, timer, result, solution,
-    handleNumberClick, confirmOperation, undo, resetToHome, displaySolution,
+    handleNumberClick, confirmOperation, undo, resetToHome, displaySolution, closeSolution,
     currentOpResult, onRestart
 }) => (
     <div className="game-container">
@@ -22,7 +22,7 @@ const GameView = ({
         <div className="numbers-grid">
             {currentNumbers.map((num) => (
                 <button key={num.id} className={`number-card ${selectedIds.includes(num.id) ? 'selected' : ''}`}
-                    onClick={() => handleNumberClick(num.id)} disabled={gameState === 'won'}>
+                    onClick={() => handleNumberClick(num.id)} disabled={gameState === 'won' || !!solution}>
                     {num.value}
                 </button>
             ))}
@@ -32,7 +32,7 @@ const GameView = ({
             <div className="op-buttons">
                 {['+', '-', '*', '/'].map(op => (
                     <button key={op} className={`op-btn ${selectedOp === op ? 'active' : ''}`}
-                        onClick={() => setSelectedOp(op)} disabled={gameState === 'won'}>{op}
+                        onClick={() => setSelectedOp(op)} disabled={gameState === 'won' || !!solution}>{op}
                     </button>
                 ))}
             </div>
@@ -46,10 +46,10 @@ const GameView = ({
                     </div>
                 )}
                 <div className="controls">
-                    <button className="btn-primary" onClick={confirmOperation} disabled={currentOpResult === null || gameState === 'won'}>
+                    <button className="btn-primary" onClick={confirmOperation} disabled={currentOpResult === null || gameState === 'won' || !!solution}>
                         Ok
                     </button>
-                    <button className="btn-secondary" onClick={undo} disabled={history.length === 0}>
+                    <button className="btn-secondary" onClick={undo} disabled={history.length === 0 || !!solution}>
                         Undo
                     </button>
                     {gameState !== 'playing' && (
@@ -60,12 +60,20 @@ const GameView = ({
         </div>
 
         <div className="history-panel">
-            <h3>Historial</h3>
+            <h3>{solution ? 'Solución Propuesta' : 'Historial'}</h3>
             <ul>
-                {history.map((step, i) => <li key={i}>{step.operation}</li>)}
+                {(solution ? solution.steps : history).map((step, i) => (
+                    <li key={i} style={solution ? { color: 'var(--accent)', fontWeight: '600' } : {}}>
+                        {solution ? step : step.operation}
+                    </li>
+                ))}
             </ul>
             <div className="history-footer">
-                <button className="btn-text" onClick={displaySolution}>Solución</button>
+                {!solution ? (
+                    <button className="btn-text" onClick={displaySolution}>Ver Solución</button>
+                ) : (
+                    <button className="btn-text" onClick={closeSolution}>Cerrar Solución (X)</button>
+                )}
                 <button className="btn-text" onClick={resetToHome}>Menú</button>
             </div>
         </div>
@@ -73,12 +81,6 @@ const GameView = ({
         {result && (
             <div className={`result-message ${result.success ? 'success' : 'fail'}`} style={{ position: 'absolute', bottom: '2rem', left: '2rem', right: '2rem', zIndex: 10 }}>
                 {result.msg}
-            </div>
-        )}
-
-        {solution && (
-            <div className="result-message" style={{ position: 'absolute', bottom: '2rem', left: '2rem', right: '2rem', zIndex: 11, background: 'var(--bg)', border: '2px solid var(--accent)' }}>
-                Solución: <strong>{solution.expression} = {solution.value}</strong>
             </div>
         )}
     </div>
