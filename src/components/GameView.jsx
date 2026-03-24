@@ -8,14 +8,15 @@ const GameView = ({
 }) => (
     <div className="game-container">
         <div className="header">
-            <h1 className="title" style={{ fontSize: '1.5rem', cursor: 'pointer' }} onClick={resetToHome}>CIFRAS</h1>
-            <div className={`timer ${timer <= 5 && timer > 0 ? 'warning' : ''}`}>
-                {timer === 0 ? 'TIEMPO' : `${timer}s`}
+            <h1 className="title" onClick={resetToHome} style={{ cursor: 'pointer' }}>CIFRAS</h1>
+            <div className="top-bar">
+                <div className={`timer ${timer <= 5 && timer > 0 ? 'warning' : ''}`}>
+                    {timer === 0 ? 'TIEMPO' : `${timer}s`}
+                </div>
+                <div className="target-display">
+                    {target}
+                </div>
             </div>
-        </div>
-
-        <div className="target-display">
-            {target}
         </div>
 
         <div className="numbers-grid">
@@ -40,19 +41,19 @@ const GameView = ({
                 {selectedIds.length === 2 && selectedOp && (
                     <div className="preview-text">
                         {currentOpResult !== null ? (
-                            <>Resultado: <span className="highlight">{currentOpResult}</span></>
-                        ) : <span className="error">Operación no válida</span>}
+                            <>Res: <span className="highlight">{currentOpResult}</span></>
+                        ) : <span className="error">Inválido</span>}
                     </div>
                 )}
                 <div className="controls">
                     <button className="btn-primary" onClick={confirmOperation} disabled={currentOpResult === null || gameState === 'won'}>
-                        Confirmar
+                        Ok
                     </button>
                     <button className="btn-secondary" onClick={undo} disabled={history.length === 0}>
-                        Deshacer
+                        Undo
                     </button>
                     {gameState !== 'playing' && (
-                        <button className="btn-primary" onClick={onRestart}>Reiniciar</button>
+                        <button className="btn-primary" onClick={onRestart}>Reset</button>
                     )}
                 </div>
             </div>
@@ -63,20 +64,21 @@ const GameView = ({
             <ul>
                 {history.map((step, i) => <li key={i}>{step.operation}</li>)}
             </ul>
-            <button className="btn-text" onClick={displaySolution}>Ver Solución</button>
-            <button className="btn-text" style={{ marginLeft: '1rem' }} onClick={resetToHome}>Menú Principal</button>
+            <div className="history-footer">
+                <button className="btn-text" onClick={displaySolution}>Solución</button>
+                <button className="btn-text" onClick={resetToHome}>Menú</button>
+            </div>
         </div>
 
         {result && (
-            <div className={`result-message ${result.success ? 'success' : 'fail'}`}>
+            <div className={`result-message ${result.success ? 'success' : 'fail'}`} style={{ position: 'absolute', bottom: '2rem', left: '2rem', right: '2rem', zIndex: 10 }}>
                 {result.msg}
             </div>
         )}
 
         {solution && (
-            <div className="result-message" style={{ border: '1px solid var(--accent)' }}>
-                Solución óptima: <br />
-                <strong style={{ fontSize: '1.8rem', color: 'var(--accent)' }}>{solution.expression} = {solution.value}</strong>
+            <div className="result-message" style={{ position: 'absolute', bottom: '2rem', left: '2rem', right: '2rem', zIndex: 11, background: 'var(--bg)', border: '2px solid var(--accent)' }}>
+                Solución: <strong>{solution.expression} = {solution.value}</strong>
             </div>
         )}
     </div>
