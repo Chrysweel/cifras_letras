@@ -11,7 +11,7 @@ export const generateNumbers = () => {
   ];
   const numbers = [];
   const tempAvailable = [...available];
-  
+
   for (let i = 0; i < 6; i++) {
     const idx = Math.floor(Math.random() * tempAvailable.length);
     numbers.push(tempAvailable.splice(idx, 1)[0]);
@@ -35,11 +35,11 @@ export const evaluateExpression = (expr) => {
   try {
     // Sanitize and only allow numbers and +-*/()
     if (/[^0-9+\-*/().\s]/.test(expr)) return null;
-    
+
     // Using Function constructor as a safer alternative to eval in this context,
     // though still needs caution. For a game, it's usually acceptable if sanitized.
     const result = new Function(`return ${expr}`)();
-    
+
     if (Number.isInteger(result) && result > 0) {
       return result;
     }
@@ -100,4 +100,19 @@ export const solve = (numbers, target) => {
   const initial = numbers.map(n => ({ val: n, expr: n.toString() }));
   find(initial);
   return closestResult;
+};
+
+/**
+ * Validates if a number is allowed in the Cifras pool.
+ */
+export const isValidCifrasNumber = (n) => {
+  const allowed = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 25, 50, 75, 100];
+  return allowed.includes(n);
+};
+
+/**
+ * Validates if the target is within the standard range.
+ */
+export const validateTarget = (n) => {
+  return n >= 100 && n <= 999;
 };

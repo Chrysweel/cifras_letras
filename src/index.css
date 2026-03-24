@@ -313,6 +313,115 @@ button {
   border: 2px solid #c8e6c9;
 }
 
+/* Mode Selection */
+.mode-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.btn-primary.large,
+.btn-secondary.large {
+  padding: 1.5rem;
+  font-size: 1.4rem;
+  border-radius: 16px;
+}
+
+/* Custom Form */
+.custom-form {
+  background: var(--social-bg);
+  padding: 2.5rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  text-align: left;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.input-group label {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.numbers-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+@media (max-width: 360px) {
+  .numbers-inputs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 600px) {
+  .numbers-inputs {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.numbers-inputs input,
+.target-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.8rem 0.5rem;
+  font-size: 1.1rem;
+  color: var(--text-h);
+  text-align: center;
+  outline: none;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Hide spin buttons */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.numbers-inputs input:focus,
+.target-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 5px var(--accent-bg);
+}
+
+.target-input {
+  width: 100%;
+  max-width: 200px;
+}
+
+.setup-error {
+  color: #ff4d4d;
+  font-weight: 600;
+  background: rgba(255, 77, 77, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.form-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
 @keyframes shake {
 
   0%,

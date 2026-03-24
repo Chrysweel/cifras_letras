@@ -1,25 +1,39 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { generateNumbers, generateTarget, solve } from './logic/mathEngine';
+import { generateNumbers, generateTarget, solve, isValidCifrasNumber, validateTarget } from './logic/mathEngine';
 import './index.css';
 
 const App = () => {
-  const [initialNumbers, setInitialNumbers] = useState([]); // Store original 6 for solver
-  const [currentNumbers, setCurrentNumbers] = useState([]); // Array of { id, value }
+  // App State: 'mode-selection', 'custom-setup', 'playing'
+  const [appState, setAppState] = useState('mode-selection');
+
+  // Game Data
+  const [initialNumbers, setInitialNumbers] = useState([]);
+  const [currentNumbers, setCurrentNumbers] = useState([]);
   const [target, setTarget] = useState(0);
-  const [selectedIds, setSelectedIds] = useState([]); // IDs of selected cards
+
+  // Interaction State
+  const [selectedIds, setSelectedIds] = useState([]);
   const [selectedOp, setSelectedOp] = useState(null);
   const [history, setHistory] = useState([]);
-  const [gameState, setGameState] = useState('idle'); // idle, playing, won
+  const [gameState, setGameState] = useState('idle'); // 'playing', 'won'
   const [timer, setTimer] = useState(30);
   const [result, setResult] = useState(null);
   const [solution, setSolution] = useState(null);
 
-  const startNewGame = useCallback(() => {
-    const nums = generateNumbers();
-    const tgt = generateTarget();
-    setInitialNumbers(nums);
-    setCurrentNumbers(nums.map((v, i) => ({ id: `num-${i}-${Date.now()}`, value: v })));
-    setTarget(tgt);
+  // Custom Setup State
+  const [customNumbers, setCustomNumbers] = useState(() => {
+    const saved = localStorage.getItem('cifras-custom-numbers');
+    return saved ? JSON.parse(saved) : ['', '', '', '', '', ''];
+  });
+  const [customTarget, setCustomTarget] = useState(() => {
+    return localStorage.getItem('cifras-custom-target') || '';
+  });
+  const [setupError, setSetupError] = useState('');
+
+  const initializeGame = useCallback((numbers, tgt) => {
+    setInitialNumbers(numbers);
+    setCurrentNumbers(numbers.map((v, i) => ({ id: `num-${i}-${Date.now()}`, value: Number(v) })));
+    setTarget(Number(tgt));
     setSelectedIds([]);
     setSelectedOp(null);
     setHistory([]);
@@ -27,7 +41,46 @@ const App = () => {
     setTimer(30);
     setResult(null);
     setSolution(null);
+    setAppState('playing');
   }, []);
+
+  const startRandomGame = () => {
+    const nums = generateNumbers();
+    const tgt = generateTarget();
+    initializeGame(nums, tgt);
+  };
+
+  const handleStartCustomGame = () => {
+    const nums = customNumbers.map(n => parseInt(n));
+    const tgt = parseInt(customTarget);
+
+    if (nums.some(isNaN) || isNaN(tgt)) {
+      setSetupError('Todos los campos deben ser números válidos.');
+      return;
+    }
+
+    if (!nums.every(isValidCifrasNumber)) {
+      setSetupError('Los números deben ser del 1 al 10, o 25, 50, 75, 100.');
+      return;
+    }
+
+    if (!validateTarget(tgt)) {
+      setSetupError('El objetivo debe estar entre 100 y 999.');
+      return;
+    }
+
+    // Save for next time
+    localStorage.setItem('cifras-custom-numbers', JSON.stringify(customNumbers));
+    localStorage.setItem('cifras-custom-target', customTarget);
+
+    setSetupError('');
+    initializeGame(nums, tgt);
+  };
+
+  const fillExample = () => {
+    setCustomNumbers(['100', '75', '50', '25', '1', '2']);
+    setCustomTarget('952');
+  };
 
   useEffect(() => {
     if (gameState === 'playing' && timer > 0) {
@@ -56,7 +109,7 @@ const App = () => {
     let res = null;
     switch (selectedOp) {
       case '+': res = n1 + n2; break;
-      case '-': res = n1 - n2; break;
+      case '-': res = Math.abs(n1 - n2); break;
       case '*': res = n1 * n2; break;
       case '/':
         if (n2 !== 0 && n1 % n2 === 0) res = n1 / n2;
@@ -108,16 +161,71 @@ const App = () => {
     }
   };
 
-  const showSolution = () => {
-    const sol = solve(initialNumbers, target);
-    setSolution(sol);
+  const resetToHome = () => {
+    setAppState('mode-selection');
+    setGameState('idle');
   };
 
-  if (gameState === 'idle') {
+  const displaySolution = () => {
+    setSolution(solve(initialNumbers, target));
+  };
+
+  if (appState === 'mode-selection') {
     return (
       <div className="game-container">
         <h1 className="title">CIFRAS</h1>
-        <button className="btn-primary" onClick={startNewGame}>Nueva Partida</button>
+        <div className="mode-selection">
+          <button className="btn-primary large" onClick={startRandomGame}>
+            Partida Aleatoria
+          </button>
+          <button className="btn-secondary large" onClick={() => setAppState('custom-setup')}>
+            Partida Personalizada
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === 'custom-setup') {
+    return (
+      <div className="game-container">
+        <h2 className="title">Personalizar</h2>
+        <div className="custom-form">
+          <div className="input-group">
+            <label>Números (6):</label>
+            <div className="numbers-inputs">
+              {customNumbers.map((val, i) => (
+                <input
+                  key={i}
+                  type="number"
+                  value={val}
+                  onChange={(e) => {
+                    const newNums = [...customNumbers];
+                    newNums[i] = e.target.value;
+                    setCustomNumbers(newNums);
+                  }}
+                  placeholder="?"
+                />
+              ))}
+            </div>
+          </div>
+          <div className="input-group">
+            <label>Número Objetivo (100-999):</label>
+            <input
+              type="number"
+              className="target-input"
+              value={customTarget}
+              onChange={(e) => setCustomTarget(e.target.value)}
+              placeholder="Ej: 524"
+            />
+          </div>
+          {setupError && <div className="setup-error">{setupError}</div>}
+          <div className="form-controls">
+            <button className="btn-primary" onClick={handleStartCustomGame}>Empezar Partida</button>
+            <button className="btn-secondary" onClick={fillExample}>Ejemplo</button>
+            <button className="btn-text" onClick={resetToHome}>Volver</button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -125,7 +233,7 @@ const App = () => {
   return (
     <div className="game-container">
       <div className="header">
-        <h1 className="title">CIFRAS</h1>
+        <h1 className="title" style={{ fontSize: '1.5rem', cursor: 'pointer' }} onClick={resetToHome}>CIFRAS</h1>
         <div className={`timer ${timer <= 5 && timer > 0 ? 'warning' : ''}`}>
           {timer === 0 ? 'TIEMPO' : `${timer}s`}
         </div>
@@ -184,7 +292,7 @@ const App = () => {
               Deshacer
             </button>
             {gameState !== 'playing' && (
-              <button className="btn-primary" onClick={startNewGame}>Reiniciar</button>
+              <button className="btn-primary" onClick={startRandomGame}>Reiniciar</button>
             )}
           </div>
         </div>
@@ -197,7 +305,8 @@ const App = () => {
             <li key={i}>{step.operation}</li>
           ))}
         </ul>
-        <button className="btn-text" onClick={showSolution}>Ver Solución</button>
+        <button className="btn-text" onClick={displaySolution}>Ver Solución</button>
+        <button className="btn-text" style={{ marginLeft: '1rem' }} onClick={resetToHome}>Menú Principal</button>
       </div>
 
       {result && (
